@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-shell">
+
+    <aside th:replace="~{fragments/layout :: sidebar('orders')}"></aside>
+
+    <div class="main-content">
+
+        <header class="topbar">
+            <div class="topbar-title">
+                Orders
+                <small><code style="color:var(--gold)">GET /api/orders?status=</code></small>
+            </div>
+            <div class="topbar-spacer"></div>
+            <div class="topbar-badge">10 APIs Active</div>
+        </header>
+
+        <div class="page-body">
+
+            <div class="breadcrumb animate-in">
+                <a th:href="@{/ui/dashboard}">Dashboard</a>
+                <span class="sep">/</span>
+                <span class="current">Orders</span>
+            </div>
+
+            <div class="page-header animate-in">
+                <h2>Orders by Status</h2>
+                <p>Browse and filter all orders across the system.</p>
+            </div>
+
+            <!-- Status filter -->
+            <div class="filter-bar animate-in">
+                <form action="/ui/orders" method="get" style="display:contents;">
+                    <div class="form-field">
+                        <label for="status">Order Status</label>
+                        <select id="status" name="status">
+                            <option value=""           th:selected="${selectedStatus == null}">— All Statuses —</option>
+                            <option value="Shipped"    th:selected="${selectedStatus == 'Shipped'}">Shipped</option>
+                            <option value="In Process" th:selected="${selectedStatus == 'In Process'}">In Process</option>
+                            <option value="Resolved"   th:selected="${selectedStatus == 'Resolved'}">Resolved</option>
+                            <option value="Cancelled"  th:selected="${selectedStatus == 'Cancelled'}">Cancelled</option>
+                            <option value="On Hold"    th:selected="${selectedStatus == 'On Hold'}">On Hold</option>
+                            <option value="Disputed"   th:selected="${selectedStatus == 'Disputed'}">Disputed</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:.5rem; align-items:flex-end;">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                        <a href="/ui/orders" class="btn btn-ghost">Clear</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Stats if results -->
+            <div th:if="${orders != null}" class="stats-row stagger">
+                <div class="stat-card">
+                    <div class="stat-label">Total Orders</div>
+                    <div class="stat-value emerald" th:text="${#lists.size(orders)}">0</div>
+                </div>
+                <div class="stat-card" th:if="${selectedStatus}">
+                    <div class="stat-label">Filtered Status</div>
+                    <div class="stat-value" style="font-size:1.1rem;">
+            <span class="badge"
+                  th:classappend="${selectedStatus == 'Shipped'}    ? 'badge-shipped'   :
+                                  (${selectedStatus == 'Cancelled'} ? 'badge-cancelled' :
+                                  (${selectedStatus == 'In Process'}? 'badge-inprocess' :
+                                  (${selectedStatus == 'Resolved'}  ? 'badge-resolved'  :
+                                  (${selectedStatus == 'Disputed'}  ? 'badge-disputed'  :
+                                  (${selectedStatus == 'On Hold'}   ? 'badge-onhold'    : 'badge-default')))))"
+                  th:text="${selectedStatus}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompt -->
+            <div th:if="${orders == null and error == null}" class="animate-in">
+                <div class="empty-state">
+                    <h3>Select a status to browse orders</h3>
+                    <p>Use the filter above to load orders by their current status.</p>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div th:if="${error}" class="alert alert-danger animate-in" th:text="${error}"></div>
+
+            <!-- No results -->
+            <div th:if="${orders != null and #lists.isEmpty(orders)}" class="animate-in">
+                <div class="empty-state">
+
+                    <h3>No orders found</h3>
+                    <p>No orders match status "<span th:text="${selectedStatus}"></span>".</p>
+                </div>
+            </div>
+
+            <!-- Orders table -->
+            <div th:if="${orders != null and !#lists.isEmpty(orders)}" class="table-container animate-in">
+                <div class="table-toolbar">
+                    <span class="table-toolbar-title"><strong th:text="${#lists.size(orders)}"></strong> orders</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Order Date</th>
+                            <th>Required Date</th>
+                            <th>Shipped Date</th>
+                            <th>Status</th>
+                            <th>Detail</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td><strong class="text-gold font-mono" th:text="${order['orderNumber']}"></strong></td>
+                            <td style="font-weight:500;" th:text="${order['customerName']}"></td>
+                            <td class="text-muted text-sm" th:text="${order['orderDate']}"></td>
+                            <td class="text-muted text-sm" th:text="${order['requiredDate']}"></td>
+                            <td class="text-sm"
+                                th:text="${order['shippedDate'] != null} ? ${order['shippedDate']} : '—'"
+                                th:classappend="${order['shippedDate'] == null} ? 'text-muted' : ''"></td>
+                            <td>
+                  <span class="badge"
+                        th:classappend="${order['status'] == 'Shipped'}    ? 'badge-shipped'   :
+                                        (${order['status'] == 'Cancelled'} ? 'badge-cancelled' :
+                                        (${order['status'] == 'In Process'}? 'badge-inprocess' :
+                                        (${order['status'] == 'Resolved'}  ? 'badge-resolved'  :
+                                        (${order['status'] == 'Disputed'}  ? 'badge-disputed'  :
+                                        (${order['status'] == 'On Hold'}   ? 'badge-onhold'    : 'badge-default')))))"
+                        th:text="${order['status']}"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/ui/orders/{id}(id=${order['orderNumber']})}"
+                                   class="btn btn-sm btn-outline">View </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

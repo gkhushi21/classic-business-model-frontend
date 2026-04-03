@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Support</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .support-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          padding: 2rem;
+          margin-top: 1.5rem;
+        }
+        .support-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 1rem;
+          margin-top: 1.5rem;
+        }
+        .support-field {
+          background: var(--bg-elevated);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          padding: 1rem 1.25rem;
+          overflow: hidden;
+        }
+        .support-field-label {
+          font-size: .68rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+          color: var(--text-dim);
+          margin-bottom: .4rem;
+        }
+        .support-field-value {
+          font-size: .9rem;
+          font-weight: 600;
+          color: var(--text);
+          word-break: break-all;
+          overflow-wrap: anywhere;
+        }
+        .support-field-value.email {
+          font-size: .78rem;
+          color: var(--gold);
+          font-family: monospace;
+        }
+        .rep-hero {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border);
+          margin-bottom: 1.5rem;
+        }
+        .rep-avatar {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #ffb800, #e59a00);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.75rem;
+          font-weight: 800;
+          color: #000;
+          flex-shrink: 0;
+        }
+        .rep-name {
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: var(--text);
+        }
+        .rep-title {
+          font-size: .8rem;
+          color: var(--text-muted);
+          margin-top: .2rem;
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('support')}"></aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-title">
+                Customer Support
+                <small><code style="color:var(--gold)">GET /api/customers/{id}/support</code></small>
+            </div>
+            <div class="topbar-spacer"></div>
+            <div class="topbar-badge">API 10</div>
+        </header>
+
+        <div class="page-body">
+            <div class="breadcrumb animate-in">
+                <a th:href="@{/ui/dashboard}">Dashboard</a>
+                <span class="sep">/</span>
+                <span class="current">Customer Support</span>
+            </div>
+
+            <div class="page-header animate-in">
+                <h2>Customer Support Representative</h2>
+                <p>Find the support rep assigned to any customer by their ID.</p>
+            </div>
+
+            <!-- Search -->
+            <div class="filter-bar animate-in">
+                <form action="/ui/customer-support-lookup" method="get" style="display:contents;">
+                    <div class="form-field">
+                        <label>Customer ID</label>
+                        <input type="number" name="id" placeholder="e.g. 103" th:value="${customerId}" min="1">
+                    </div>
+                    <div style="display:flex; gap:.5rem; align-items:flex-end;">
+                        <button type="submit" class="btn btn-primary">Find Support Rep</button>
+                        <a href="/ui/customer-support-lookup" class="btn btn-ghost">Clear</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Error -->
+            <div th:if="${error}" class="alert alert-danger animate-in" th:text="${error}"></div>
+
+            <!-- Empty prompt -->
+            <div th:if="${support == null and error == null and customerId == null}" class="empty-state animate-in">
+                <h3>Enter a Customer ID</h3>
+                <p>Type a customer number above to find their support representative.</p>
+            </div>
+
+            <!-- Result -->
+            <div th:if="${support != null}" class="support-card animate-in">
+
+                <!-- Rep Hero Header -->
+                <div class="rep-hero">
+                    <div class="rep-avatar"
+                         th:text="${support['firstName'] != null} ? ${#strings.substring(support['firstName'], 0, 1)} : '?'">G</div>
+                    <div>
+                        <div class="rep-name">
+                            <span th:text="${support['firstName']}">Gerard</span>
+                            <span th:text="${support['lastName']}"> Hernandez</span>
+                        </div>
+                        <div class="rep-title">
+                            <span class="badge badge-gold" th:text="${support['jobTitle'] != null} ? ${support['jobTitle']} : 'Support Rep'">Sales Rep</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Fields Grid -->
+                <div class="support-grid">
+                    <div class="support-field" th:if="${support['employeeNumber'] != null}">
+                        <div class="support-field-label">Employee #</div>
+                        <div class="support-field-value" th:text="${support['employeeNumber']}"></div>
+                    </div>
+                    <div class="support-field" th:if="${support['firstName'] != null}">
+                        <div class="support-field-label">First Name</div>
+                        <div class="support-field-value" th:text="${support['firstName']}"></div>
+                    </div>
+                    <div class="support-field" th:if="${support['lastName'] != null}">
+                        <div class="support-field-label">Last Name</div>
+                        <div class="support-field-value" th:text="${support['lastName']}"></div>
+                    </div>
+                    <div class="support-field" th:if="${support['email'] != null}">
+                        <div class="support-field-label">Email</div>
+                        <div class="support-field-value email" th:text="${support['email']}"></div>
+                    </div>
+                    <div class="support-field" th:if="${support['jobTitle'] != null}">
+                        <div class="support-field-label">Job Title</div>
+                        <div class="support-field-value" th:text="${support['jobTitle']}"></div>
+                    </div>
+                    <div class="support-field" th:if="${support['officeCode'] != null}">
+                        <div class="support-field-label">Office Code</div>
+                        <div class="support-field-value" th:text="${support['officeCode']}"></div>
+                    </div>
+                    <div class="support-field" th:if="${support['extension'] != null}">
+                        <div class="support-field-label">Extension</div>
+                        <div class="support-field-value" th:text="${support['extension']}"></div>
+                    </div>
+                    <div class="support-field" th:if="${support['reportsTo'] != null}">
+                        <div class="support-field-label">Reports To</div>
+                        <div class="support-field-value" th:text="${support['reportsTo']}"></div>
+                    </div>
+                </div>
+
+                <!-- Fallback: show any remaining fields not covered above -->
+                <div style="margin-top:1rem;" th:if="${support != null}">
+                    <div th:each="entry : ${support}"
+                         th:if="${entry.key != 'firstName' and entry.key != 'lastName' and
+                        entry.key != 'email' and entry.key != 'jobTitle' and
+                        entry.key != 'employeeNumber' and entry.key != 'officeCode' and
+                        entry.key != 'extension' and entry.key != 'reportsTo'}"
+                         style="display:inline-block; margin:.25rem;">
+                        <span style="font-size:.72rem; color:var(--text-dim);" th:text="${entry.key + ': '}"></span>
+                        <span style="font-size:.72rem; color:var(--text-muted);" th:text="${entry.value}"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
