@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Orders</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <aside th:replace="~{fragments/layout :: sidebar('customers')}"></aside>
+
+  <div class="main-content">
+
+    <header class="topbar">
+      <div class="topbar-title">
+        Customer Orders
+        <small>
+          <code style="color:var(--gold)">GET /api/customers/<span th:text="${customerId}"></span>/orders</code>
+          &nbsp;·&nbsp;
+          <code style="color:var(--sapphire)">GET /api/customers/<span th:text="${customerId}"></span>/support</code>
+          &nbsp;·&nbsp;
+          <code style="color:var(--emerald)">GET /api/customers/<span th:text="${customerId}"></span>/payment/amount</code>
+        </small>
+      </div>
+      <div class="topbar-spacer"></div>
+      <a th:href="@{/ui/customers}" class="btn btn-ghost btn-sm">← Back</a>
+    </header>
+
+    <div class="page-body">
+
+      <div class="breadcrumb animate-in">
+        <a th:href="@{/ui/dashboard}">Dashboard</a>
+        <span class="sep">/</span>
+        <a th:href="@{/ui/customers}">Customers</a>
+        <span class="sep">/</span>
+        <span class="current">Customer #<span th:text="${customerId}"></span></span>
+      </div>
+
+      <div class="page-header animate-in">
+        <h2>Orders for Customer <span th:text="'#' + ${customerId}" style="color:var(--gold)"></span></h2>
+        <p>View all orders, filter by status, and see customer summary.</p>
+      </div>
+
+      <!-- Top info row: spending + support -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;" class="animate-in">
+
+        <!-- Spending card -->
+        <div class="card" th:if="${spending}">
+          <div class="card-header">
+            <div class="card-title">Customer Spending</div>
+            <span class="badge badge-emerald">payment/amount</span>
+          </div>
+          <div class="stat-value gold"
+               th:text="${spending['totalAmount'] != null} ? '$' + ${#numbers.formatDecimal(spending['totalAmount'], 1, 'COMMA', 2, 'POINT')} : 'N/A'">$0.00</div>
+          <div class="stat-change text-muted text-xs mt-1">Total lifetime spending</div>
+        </div>
+        <div class="card" th:if="${spending == null}">
+          <div class="card-title">Spending</div>
+          <div class="empty-state" style="padding:1.5rem 0;">
+            <div class="text-muted text-sm">No spending data</div>
+          </div>
+        </div>
+
+        <!-- Support rep card -->
+        <div class="card" th:if="${support}">
+          <div class="card-header">
+            <div class="card-title">Sales Representative</div>
+            <span class="badge badge-default">support</span>
+          </div>
+          <div class="support-box">
+            <div class="support-avatar"
+                 th:text="${support['firstName'] != null} ? ${#strings.substring(support['firstName'],0,1)} : '?'">?</div>
+            <div>
+              <div class="support-name"
+                   th:text="${support['firstName']} + ' ' + ${support['lastName']}">–</div>
+              <div class="support-title" th:text="${support['jobTitle']}">–</div>
+              <div class="support-email" th:text="${support['email']}">–</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" th:if="${support == null}">
+          <div class="card-title">Sales Rep</div>
+          <div class="empty-state" style="padding:1.5rem 0;">
+            <div class="text-muted text-sm">No support data</div>
+          </div>
+        </div>
+
+      </div>
+
+     <!-- Filter by Status -->
+<div class="filter-bar animate-in">
+  <form th:action="@{'/ui/customers/' + ${customerId} + '/orders_status'}" method="get" style="display:contents;">
+    <div class="form-field">
+      <label>Filter by Status</label>
+      <select name="status">
+        <option value="">— All Orders —</option>
+        <option value="Shipped"    th:selected="${selectedStatus == 'Shipped'}">Shipped</option>
+        <option value="In Process" th:selected="${selectedStatus == 'In Process'}">In Process</option>
+        <option value="Resolved"   th:selected="${selectedStatus == 'Resolved'}">Resolved</option>
+        <option value="Cancelled"  th:selected="${selectedStatus == 'Cancelled'}">Cancelled</option>
+        <option value="On Hold"    th:selected="${selectedStatus == 'On Hold'}">On Hold</option>
+        <option value="Disputed"   th:selected="${selectedStatus == 'Disputed'}">Disputed</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:.5rem; align-items:flex-end;">
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <a th:href="@{'/ui/customers/' + ${customerId} + '/orders'}" class="btn btn-ghost">All Orders</a>
+    </div>
+  </form>
+</div>
+
+      <div th:if="${selectedStatus}" class="alert alert-info animate-in">
+        Showing orders with status: <strong th:text="${selectedStatus}"></strong>
+        &nbsp;·&nbsp; <span th:text="${orders != null ? #lists.size(orders) : 0}"></span> result(s)
+      </div>
+
+      <!-- Error -->
+      <div th:if="${error}" class="alert alert-danger animate-in" th:text="${error}"></div>
+
+      <!-- Empty -->
+      <div th:if="${orders == null or #lists.isEmpty(orders)}" class="animate-in">
+        <div class="empty-state">
+          <div class="empty-icon"></div>
+          <h3>No orders found</h3>
+          <p th:if="${selectedStatus}">No orders with status "<span th:text="${selectedStatus}"></span>"</p>
+          <p th:if="${selectedStatus == null}">This customer has no orders on record.</p>
+        </div>
+      </div>
+
+      <!-- Orders table -->
+      <div th:if="${orders != null and !#lists.isEmpty(orders)}" class="table-container animate-in">
+        <div class="table-toolbar">
+          <span class="table-toolbar-title">
+            <strong th:text="${#lists.size(orders)}"></strong> order(s)
+            <span th:if="${selectedStatus}"> · filtered by <span class="badge badge-default" th:text="${selectedStatus}"></span></span>
+          </span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Order Date</th>
+                <th>Required Date</th>
+                <th>Shipped Date</th>
+                <th>Status</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="order : ${orders}">
+                <td><strong class="text-gold font-mono" th:text="${order['orderNumber']}"></strong></td>
+                <td class="text-muted" th:text="${order['orderDate']}"></td>
+                <td class="text-muted" th:text="${order['requiredDate']}"></td>
+                <td th:text="${order['shippedDate'] != null} ? ${order['shippedDate']} : '—'"
+                    th:classappend="${order['shippedDate'] == null} ? 'text-muted' : ''"></td>
+                <td>
+                  <span class="badge"
+                        th:classappend="${order['status'] == 'Shipped'}    ? 'badge-shipped'   :
+                                        (${order['status'] == 'Cancelled'} ? 'badge-cancelled' :
+                                        (${order['status'] == 'In Process'}? 'badge-inprocess' :
+                                        (${order['status'] == 'Resolved'}  ? 'badge-resolved'  :
+                                        (${order['status'] == 'Disputed'}  ? 'badge-disputed'  :
+                                        (${order['status'] == 'On Hold'}   ? 'badge-onhold'    : 'badge-default')))))"
+                        th:text="${order['status']}"></span>
+                </td>
+                <td>
+                  <a th:href="@{/ui/orders/{id}(id=${order['orderNumber']})}"
+                     class="btn btn-sm btn-outline">View →</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
