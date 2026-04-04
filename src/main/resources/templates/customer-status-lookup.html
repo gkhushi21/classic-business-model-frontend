@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders by Status — ClassicModels</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('orders-status')}"></aside>
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-title">Orders by Status <small><code style="color:var(--gold)">GET /api/customers/{id}/orders_status</code></small></div>
+            <div class="topbar-spacer"></div><div class="topbar-badge">API 8</div>
+        </header>
+        <div class="page-body">
+            <div class="page-header animate-in">
+                <h2>Customer Orders filtered by Status</h2>
+                <p>Enter a customer ID and status to filter their orders.</p>
+            </div>
+            <div class="filter-bar animate-in">
+                <form action="/ui/customer-status-lookup" method="get" style="display:contents;">
+                    <div class="form-field">
+                        <label>Customer ID</label>
+                        <input type="number" name="id" placeholder="e.g. 103" th:value="${customerId}" min="1">
+                    </div>
+                    <div class="form-field">
+                        <label>Status</label>
+                        <select name="status">
+                            <option value="Shipped"    th:selected="${selectedStatus == 'Shipped'}">Shipped</option>
+                            <option value="In Process" th:selected="${selectedStatus == 'In Process'}">In Process</option>
+                            <option value="Resolved"   th:selected="${selectedStatus == 'Resolved'}">Resolved</option>
+                            <option value="Cancelled"  th:selected="${selectedStatus == 'Cancelled'}">Cancelled</option>
+                            <option value="On Hold"    th:selected="${selectedStatus == 'On Hold'}">On Hold</option>
+                            <option value="Disputed"   th:selected="${selectedStatus == 'Disputed'}">Disputed</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:.5rem;align-items:flex-end;">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </form>
+            </div>
+            <div th:if="${error}" class="alert alert-danger animate-in" th:text="${error}"></div>
+            <div th:if="${orders != null and !#lists.isEmpty(orders)}" class="table-container animate-in">
+                <div class="table-toolbar">
+                    <span class="table-toolbar-title">Customer #<span th:text="${customerId}"></span> — <span th:text="${selectedStatus}"></span></span>
+                    <span class="badge badge-emerald" th:text="${#lists.size(orders)} + ' results'"></span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Order #</th><th>Order Date</th><th>Required Date</th><th>Status</th></tr></thead>
+                        <tbody>
+                        <tr th:each="o : ${orders}">
+                            <td class="text-gold font-mono" th:text="${o['orderNumber']}"></td>
+                            <td th:text="${o['orderDate']}"></td>
+                            <td th:text="${o['requiredDate']}"></td>
+                            <td><span class="badge badge-default" th:text="${o['status']}"></span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
