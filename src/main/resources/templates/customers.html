@@ -1,29 +1,220 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <title>Customers</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers — ClassicModels</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<h2>Customer Search</h2>
+<div class="app-shell">
 
-<form action="/ui/customers" method="get">
-    <input type="text" name="country" placeholder="Enter country"/>
-    <button type="submit">Search</button>
-</form>
+  <aside th:replace="~{fragments/layout :: sidebar(${activeTab == 'top'} ? 'top' : 'customers')}"></aside>
 
-<table border="1">
-    <tr>
-        <th>Name</th>
-        <th>Country</th>
-    </tr>
+  <div class="main-content">
 
-    <tr th:each="c : ${customers.content}">
-        <td th:text="${c.customerName}"></td>
-        <td th:text="${c.country}"></td>
-    </tr>
+    <header class="topbar">
+      <div class="topbar-title">
+        Customers
+        <small th:if="${activeTab == 'country'}">
+          Search by Country ·
+          <code style="color:var(--gold)">GET /api/customers?country=</code>
+        </small>
+        <small th:if="${activeTab == 'top'}">
+          Top Spenders ·
+          <code style="color:var(--gold)">GET /api/customers/top</code>
+        </small>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-badge">10 APIs Active</div>
+    </header>
 
-</table>
+    <div class="page-body">
+
+      <div class="breadcrumb animate-in">
+        <a th:href="@{/ui/dashboard}">Dashboard</a>
+        <span class="sep">/</span>
+        <span class="current"
+              th:text="${activeTab == 'top'} ? 'Top Customers' : 'Customers by Country'">
+          Customers
+        </span>
+      </div>
+
+      <div class="page-header animate-in">
+        <h2 th:if="${activeTab == 'country'}">Customers by Country</h2>
+        <h2 th:if="${activeTab == 'top'}">Top Customers</h2>
+        <p th:if="${activeTab == 'country'}">
+          Paginated list of customers filtered by country.
+        </p>
+        <p th:if="${activeTab == 'top'}">
+          Highest-value customers ranked by credit limit.
+        </p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-strip animate-in">
+        <a th:href="@{/ui/customers}" class="tab-link"
+           th:classappend="${activeTab == 'country'} ? ' active' : ''">
+          Search by Country
+        </a>
+        <a th:href="@{/ui/top}" class="tab-link"
+           th:classappend="${activeTab == 'top'} ? ' active' : ''">
+          ★ Top Customers
+        </a>
+      </div>
+
+      <!-- Country Search Filter -->
+      <div th:if="${activeTab == 'country'}" class="filter-bar animate-in">
+        <form action="/ui/customers" method="get" style="display:contents;">
+          <div class="form-field">
+            <label for="country">Country</label>
+            <input type="text" id="country" name="country"
+                   placeholder="e.g. USA, France, Germany…"
+                   th:value="${country}">
+          </div>
+          <div style="display:flex; gap:.5rem; align-items:flex-end;">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="/ui/customers" class="btn btn-ghost">Clear</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Error -->
+      <div th:if="${error}"
+           class="alert alert-danger animate-in"
+           th:text="${error}"></div>
+
+      <!-- Stats -->
+      <div th:if="${customers != null and !#lists.isEmpty(customers)}"
+           class="stats-row stagger">
+        <div class="stat-card" th:if="${country != null}">
+          <div class="stat-label">Country</div>
+          <div class="stat-value"
+               style="font-size:1.4rem;"
+               th:text="${country}">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Results</div>
+          <div class="stat-value emerald"
+               th:text="${#lists.size(customers)}">0</div>
+        </div>
+        <div class="stat-card" th:if="${totalPages != null}">
+          <div class="stat-label">Total Pages</div>
+          <div class="stat-value" th:text="${totalPages}">–</div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div th:if="${customers == null or #lists.isEmpty(customers)}"
+           class="animate-in">
+        <div class="empty-state">
+          <h3 th:if="${activeTab == 'country' and (country == null or country.isBlank())}">
+            Enter a country to search customers
+          </h3>
+          <h3 th:if="${activeTab == 'country' and country != null and !country.isBlank()}">
+            No customers found for
+            "<span th:text="${country}"></span>"
+          </h3>
+          <h3 th:if="${activeTab == 'top'}">No customer data available</h3>
+          <p class="text-muted">
+            Try a different search term or check your backend connection.
+          </p>
+        </div>
+      </div>
+
+      <!-- Customers Table -->
+      <div th:if="${customers != null and !#lists.isEmpty(customers)}"
+           class="table-container animate-in">
+        <div class="table-toolbar">
+          <span class="table-toolbar-title">
+            <span th:if="${activeTab == 'country'}">
+              Customers in <strong th:text="${country}"></strong>
+            </span>
+            <span th:if="${activeTab == 'top'}">
+              Top Customers by Credit Limit
+            </span>
+          </span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Customer Name</th>
+                <th>Country</th>
+                <th>Phone</th>
+                <th>Credit Limit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="cust, iterStat : ${customers}">
+                <td class="text-muted text-sm"
+                    th:text="${iterStat.count}"></td>
+                <td style="font-weight:500;"
+                    th:text="${cust['customerName']}"></td>
+                <td>
+                  <span class="badge badge-default"
+                        th:text="${cust['country']}"></span>
+                </td>
+                <td class="font-mono"
+                    th:text="${cust['phone']}"></td>
+                <td>
+                  <span th:if="${cust['creditLimit'] != null}"
+                        class="text-gold"
+                        th:text="${'$' + #numbers.formatDecimal(cust['creditLimit'], 1, 'COMMA', 2, 'POINT')}"></span>
+                  <span th:if="${cust['creditLimit'] == null}"
+                        class="badge badge-default">N/A</span>
+                </td>
+                <td>
+                  <div style="display:flex; gap:.4rem;">
+                    <a th:href="@{'/ui/customer-lookup?id=' + ${cust['customerNumber']}}"
+                       class="btn btn-sm btn-outline">Orders</a>
+                    <a th:href="@{'/ui/customer-status-lookup?id=' + ${cust['customerNumber']}}"
+                       class="btn btn-sm btn-ghost">By Status</a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination (only for country search) -->
+        <div th:if="${totalPages != null and totalPages > 1}"
+             class="pagination">
+          <a th:if="${currentPage > 0}"
+             th:href="@{/ui/customers(country=${country}, page=0, size=5)}">«</a>
+          <a th:if="${currentPage > 0}"
+             th:href="@{/ui/customers(country=${country}, page=${currentPage - 1}, size=5)}">‹</a>
+
+          <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+            <span th:if="${i == currentPage}"
+                  class="current"
+                  th:text="${i + 1}"></span>
+            <a th:if="${i != currentPage and
+                        (i == currentPage - 1 or i == currentPage + 1
+                         or i == 0 or i == totalPages - 1)}"
+               th:href="@{/ui/customers(country=${country}, page=${i}, size=5)}"
+               th:text="${i + 1}"></a>
+          </th:block>
+
+          <a th:if="${currentPage < totalPages - 1}"
+             th:href="@{/ui/customers(country=${country}, page=${currentPage + 1}, size=5)}">›</a>
+          <a th:if="${currentPage < totalPages - 1}"
+             th:href="@{/ui/customers(country=${country}, page=${totalPages - 1}, size=5)}">»</a>
+
+          <span class="page-info">
+            Page <strong th:text="${currentPage + 1}"></strong>
+            of <strong th:text="${totalPages}"></strong>
+          </span>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
