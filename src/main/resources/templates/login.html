@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In </title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #132a13;
+      min-height: 100vh;
+    }
+
+    /* ── Two-column layout ── */
+    .login-page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── LEFT HERO PANEL ── */
+    .login-hero {
+      background: linear-gradient(145deg, #004052 0%, #002029 50%, #002029 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(102,155,188,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: rgba(102,155,188,.15);
+      border: 1px solid rgba(102,155,188,.35);
+      color: #669bbc;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .35rem .85rem;
+      border-radius: 100px;
+      width: fit-content;
+      margin-bottom: 2rem;
+    }
+
+    .hero-title {
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+    }
+    .hero-title span { color: #ffb703 }
+
+    .hero-sub {
+      font-size: .95rem;
+      text-align:justify;
+      color: rgba(255,255,255,.5);
+      line-height: 1.7;
+      max-width: 380px;
+      margin-bottom: 2.5rem;
+    }
+
+ 
+
+    /* ── RIGHT FORM PANEL ── */
+    .login-form-panel {
+      background: #111418;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo-icon {
+      font-size: 2.5rem;
+      margin-bottom: .5rem;
+      display: block;
+    }
+    .logo-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: .3rem;
+    }
+    .logo-sub {
+      font-size: .78rem;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    /* Tabs */
+    .auth-tabs {
+      display: flex;
+      background: #1a1e22;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 1.75rem;
+      gap: 4px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: .65rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      transition: all .2s;
+      background: transparent;
+      color: #555;
+    }
+    .auth-tab.active {
+      background: #669bbc;
+      color: #fff;
+    }
+
+    /* Panels */
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+
+    /* Form fields */
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label {
+      display: block;
+      font-size: .72rem;
+      font-weight: 700;
+      color: #666;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      margin-bottom: .45rem;
+    }
+    .form-group input {
+      width: 100%;
+      background: #1a1e22;
+      border: 1.5px solid #252b30;
+      border-radius: 10px;
+      color: #fff;
+      font-size: .95rem;
+      padding: .8rem 1rem;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+    }
+    .form-group input:focus { border-color: #669bbc; }
+    .form-group input::placeholder { color: #383e44; }
+
+    /* Buttons */
+    .btn-auth {
+      width: 100%;
+      padding: .88rem;
+      background: #669bbc;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      margin-top: .5rem;
+      font-family: inherit;
+      letter-spacing: .02em;
+    }
+    .btn-auth:hover { opacity: .88; }
+    .btn-auth:active { transform: scale(.99); }
+    .btn-auth.signup { background:#669bbc; }
+
+    /* Alerts */
+    .alert-box {
+      padding: .75rem 1rem;
+      border-radius: 8px;
+      font-size: .82rem;
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .alert-error {
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #f87171;
+    }
+    .alert-success {
+      background: rgba(61,186,125,.1);
+      border: 1px solid rgba(61,186,125,.25);
+      color: #3dba7d;
+    }
+
+    
+    .jwt-pill {
+      background: rgba(102,155,188,.12);
+      border: 1px solid rgba(102,155,188,.25);
+      color: #669bbc;
+      font-size: .63rem;
+      padding: .15rem .5rem;
+      border-radius: 100px;
+      font-weight: 700;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .login-page { grid-template-columns: 1fr; }
+      .login-hero { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-page">
+
+  <div class="login-hero">
+
+    <h1 class="hero-title">Classic<span>Business</span><br>Model</h1>
+
+    <p class="hero-sub">
+      The objective of this Classic Business Model project is to view business
+      data using GET APIs. The system focuses on efficiently retrieving and
+      displaying information such as customers, orders, payments, sales details,
+      employee-customer relationships, and analytics data.
+    </p>
+
+    
+  </div>
+  
+  <div class="login-form-panel">
+    <div class="login-box">
+
+      <div class="login-logo">
+        <h1 class="logo-title">Welcome</h1>
+        <p class="logo-sub">Sign in with your credentials to continue</p>
+      </div>
+
+      <!-- Alerts — only shown when error or logout message exists -->
+      <div th:if="${error}" class="alert-box alert-error">
+        <span>⚠</span>
+        <span th:text="${error}">Error</span>
+      </div>
+      <div th:if="${message}" class="alert-box alert-success">
+        <span>✓</span>
+        <span th:text="${message}">Message</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="showTab('login', this)">Sign In</button>
+        <button class="auth-tab" onclick="showTab('signup', this)">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="panel-login" class="auth-panel active">
+        <form action="/auth/do-login" method="post">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username"
+                   placeholder="Enter your username"
+                   autofocus required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password"
+                   placeholder="••••••••"
+                   required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn-auth">Sign In →</button>
+        </form>
+      </div>
+
+      <!-- Signup Form -->
+      <div id="panel-signup" class="auth-panel">
+        <form action="/auth/do-signup" method="post">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username"
+                   placeholder="Choose a username"
+                   required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password"
+                   placeholder="Create a strong password"
+                   required autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn-auth signup">Create Account →</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+  function showTab(tab, btn) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+  }
+</script>
+</body>
+</html>
